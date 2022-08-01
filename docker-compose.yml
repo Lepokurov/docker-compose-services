@@ -1,0 +1,33 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=pass
+      - POSTGRES_DB=bet
+    restart: unless-stopped
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+  
+  line-provider:
+    image: line-provider:stable
+    ports:
+      - "4000:4000"
+    volumes:
+      - type: bind
+        source: ./line_provider_settings_local.py
+        target: /usr/app/settings_local.py
+    command: bash -c "uvicorn main:app --host 0.0.0.0 --port 4000"
+
+  bet-maker:
+    image: bet-maker:stable
+    ports:
+      - "5000:5000"
+    volumes:
+      - type: bind
+        source: ./bet_maker_settings_local.py
+        target: /usr/app/settings_local.py
+    command: bash -c "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 5000"
